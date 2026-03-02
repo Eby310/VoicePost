@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="nav">
         <a href="index.html" class="logo">VoicePost</a>
         <div class="nav-links">
@@ -20,12 +19,12 @@
         </div>
     </nav>
 
-    <!-- Recording Page -->
     <div class="main-content">
         <section class="recording-page">
+            <a href="index.html" class="back-link">Back to Home</a>
+            
             <div class="recording-container">
-                <a href="index.html" class="back-link">&larr; Back to Home</a>
-                
+                <!-- Idle State -->
                 <div id="idleState">
                     <button class="mic-button" id="micButton" onclick="startRecording()">
                         <svg class="mic-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,11 +33,12 @@
                     </button>
                     <p class="recording-status">Click to start recording</p>
                     <p class="max-duration">Maximum duration: 2 minutes</p>
-                    <p class="max-duration" style="margin-top: 8px; color: var(--linkedin-blue);">Using free Web Speech API</p>
+                    <p class="error-message" id="errorMessage"></p>
                 </div>
 
-                <div id="recordingState">
-                    <button class="mic-button recording" id="recordingMicButton" onclick="stopRecording()">
+                <!-- Recording State -->
+                <div id="recordingState" style="display: none;">
+                    <button class="mic-button recording" onclick="stopRecording()">
                         <svg class="mic-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
                         </svg>
@@ -48,16 +48,17 @@
                     <button class="cancel-btn" onclick="cancelRecording()">Cancel</button>
                 </div>
 
-                <div id="processingState">
+                <!-- Processing State -->
+                <div id="processingState" style="display: none;">
                     <div class="spinner"></div>
-                    <p class="recording-status">AI is thinking...</p>
+                    <p class="recording-status">Converting to LinkedIn post...</p>
                 </div>
 
-                <!-- Editor (Hidden by default) -->
-                <div id="editorContainer" style="display: none;">
+                <!-- Editor State -->
+                <div id="editorState" style="display: none;">
                     <div class="editor-container">
                         <h2>Your LinkedIn Post</h2>
-                        <textarea class="post-textarea" id="postTextarea" placeholder="Your generated post will appear here..."></textarea>
+                        <textarea class="post-textarea" id="postTextarea"></textarea>
                         <div class="editor-footer">
                             <div class="char-counter" id="charCounter">0 / 3000</div>
                             <label class="edit-toggle">
@@ -65,21 +66,19 @@
                                 Edit enabled
                             </label>
                         </div>
-                        <div class="editor-actions" style="margin-top: 16px;">
+                        <div class="editor-actions">
                             <button class="btn btn-primary" onclick="copyToClipboard()">
                                 <span id="copyText">Copy to Clipboard</span>
                                 <span class="copied-feedback" id="copiedFeedback">Copied!</span>
                             </button>
                             <button class="btn btn-outline" onclick="generateAnother()">Generate Another</button>
                         </div>
-                        <p class="error-message" id="errorMessage"></p>
                     </div>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-links">
@@ -92,34 +91,24 @@
     </footer>
 
     <script>
-        // ============================================
-        // FREE CONFIGURATION - Hugging Face API Key
-        // Get free key at: https://huggingface.co/settings/tokens
-        // ============================================
-        const HUGGINGFACE_API_KEY = 'Api_key_goes_here';
-        // ============================================
-
+        // Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
-        let recordingTimer = null;
-        let recordingSeconds = 0;
-        let maxRecordingTime = 120;
-        let finalTranscript = '';
+        let timer = null;
+        let seconds = 0;
+        let transcript = '';
         let isRecording = false;
 
-        function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            setTimeout(() => {
-                errorEl.classList.remove('show');
-            }, 5000);
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
         }
 
         function startRecording() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
             if (!SpeechRecognition) {
-                showError('Speech recognition not supported. Please use Chrome or Edge.');
+                showError('Speech recognition not supported. Use Chrome or Edge.');
                 return;
             }
 
@@ -128,211 +117,165 @@
             recognition.interimResults = true;
             recognition.lang = 'en-US';
 
-            finalTranscript = '';
+            transcript = '';
             isRecording = true;
+            seconds = 0;
 
-            recognition.onstart = () => {
+            recognition.onstart = function() {
                 document.getElementById('idleState').style.display = 'none';
-                document.getElementById('recordingState').classList.add('active');
+                document.getElementById('recordingState').style.display = 'block';
                 document.getElementById('liveTranscript').textContent = 'Listening...';
-                recordingSeconds = 0;
-
-                recordingTimer = setInterval(() => {
-                    recordingSeconds++;
-                    const minutes = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
-                    const seconds = (recordingSeconds % 60).toString().padStart(2, '0');
-                    document.getElementById('recordingTimer').textContent = `${minutes}:${seconds}`;
-
-                    if (recordingSeconds >= maxRecordingTime) {
-                        stopRecording();
-                    }
+                
+                timer = setInterval(() => {
+                    seconds++;
+                    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                    const s = (seconds % 60).toString().padStart(2, '0');
+                    document.getElementById('recordingTimer').textContent = m + ':' + s;
+                    
+                    if (seconds >= 120) stopRecording();
                 }, 1000);
             };
 
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
+            recognition.onresult = function(event) {
+                let interim = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript + ' ';
+                        transcript += event.results[i][0].transcript + ' ';
                     } else {
-                        interimTranscript += transcript;
+                        interim += event.results[i][0].transcript;
                     }
                 }
-                document.getElementById('liveTranscript').textContent = interimTranscript || 'Listening...';
+                document.getElementById('liveTranscript').textContent = interim || 'Listening...';
             };
 
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                if (event.error === 'not-allowed') {
-                    showError('Microphone access denied. Please allow microphone access.');
-                } else if (event.error !== 'no-speech') {
-                    showError('Error: ' + event.error);
+            recognition.onerror = function(e) {
+                console.log('Speech error:', e.error);
+                if (e.error === 'not-allowed') {
+                    showError('Microphone denied. Allow access and try again.');
                 }
             };
 
-            recognition.onend = () => {
+            recognition.onend = function() {
                 if (isRecording) {
-                    // Restart if still recording
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        // Already stopped
-                    }
+                    try { recognition.start(); } catch(e) {}
                 }
             };
 
             try {
                 recognition.start();
-            } catch (error) {
-                console.error('Error starting recognition:', error);
-                showError('Could not start recording. Please try again.');
+            } catch(e) {
+                showError('Could not start. Click again.');
             }
         }
 
         function stopRecording() {
             isRecording = false;
-            
             if (recognition) {
                 recognition.stop();
                 recognition = null;
             }
-            
-            if (recordingTimer) {
-                clearInterval(recordingTimer);
-                recordingTimer = null;
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
             }
 
-            if (finalTranscript.trim() === '') {
-                showError('No speech detected. Please try again.');
-                resetRecordingState();
+            if (!transcript.trim()) {
+                showError('No speech detected. Try again.');
+                resetToIdle();
                 return;
             }
 
-            processTranscript(finalTranscript.trim());
+            processTranscript();
         }
 
         function cancelRecording() {
             isRecording = false;
-            
             if (recognition) {
                 recognition.stop();
                 recognition = null;
             }
-            
-            if (recordingTimer) {
-                clearInterval(recordingTimer);
-                recordingTimer = null;
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
             }
-            
-            finalTranscript = '';
-            resetRecordingState();
+            transcript = '';
+            resetToIdle();
         }
 
-        function resetRecordingState() {
-            document.getElementById('idleState').style.display = 'block';
-            document.getElementById('recordingState').classList.remove('active');
+        function resetToIdle() {
+            document.getElementById('recordingState').style.display = 'none';
             document.getElementById('processingState').style.display = 'none';
-            document.getElementById('editorContainer').style.display = 'none';
+            document.getElementById('editorState').style.display = 'none';
+            document.getElementById('idleState').style.display = 'block';
         }
 
-        async function processTranscript(transcribedText) {
-            document.getElementById('recordingState').classList.remove('active');
+        function processTranscript() {
+            document.getElementById('recordingState').style.display = 'none';
             document.getElementById('processingState').style.display = 'block';
 
-            try {
-                // Generate LinkedIn post using Hugging Face Inference API
-                const response = await fetch('https://api-inference.huggingface.co/models/facebook/bart-large-cnn', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        inputs: `Transform this voice memo into a polished, engaging LinkedIn post. Use a professional yet conversational tone. Add relevant hashtags. Keep it between 100-300 words. Never include emojis. Make it sound natural and authentic.\n\nVoice memo: ${transcribedText}`,
-                        parameters: {
-                            max_length: 500,
-                            min_length: 100
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to generate post');
-                }
-
-                const data = await response.json();
-                let generatedPost = '';
-
-                if (Array.isArray(data) && data[0] && data[0].summary_text) {
-                    generatedPost = data[0].summary_text;
-                } else if (data.summary_text) {
-                    generatedPost = data.summary_text;
-                } else if (typeof data === 'string') {
-                    generatedPost = data;
-                } else {
-                    // Fallback: use the transcribed text with some formatting
-                    generatedPost = formatAsLinkedInPost(transcribedText);
-                }
-
-                if (!generatedPost || generatedPost.trim() === '') {
-                    generatedPost = formatAsLinkedInPost(transcribedText);
-                }
-
-                // Show editor
-                document.getElementById('processingState').style.display = 'none';
-                document.getElementById('editorContainer').style.display = 'block';
-                document.getElementById('postTextarea').value = generatedPost;
-                updateCharCounter();
-
-            } catch (error) {
-                console.error('Error processing transcript:', error);
-                // Fallback: format the transcript directly
-                const formattedPost = formatAsLinkedInPost(transcribedText);
-                document.getElementById('processingState').style.display = 'none';
-                document.getElementById('editorContainer').style.display = 'block';
-                document.getElementById('postTextarea').value = formattedPost;
-                updateCharCounter();
-            }
+            // Simulate processing delay
+            setTimeout(() => {
+                const linkedInPost = transformToLinkedInPost(transcript.trim());
+                showEditor(linkedInPost);
+            }, 1500);
         }
 
-        function formatAsLinkedInPost(text) {
-            // Simple formatting if AI fails
-            const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+        function transformToLinkedInPost(text) {
+            // Clean up the text
+            let clean = text.replace(/\s+/g, ' ').trim();
+            
+            // Capitalize first letter
+            clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+            
+            // Add punctuation if missing
+            if (!clean.endsWith('.') && !clean.endsWith('!') && !clean.endsWith('?')) {
+                clean += '.';
+            }
+
+            // Split into sentences and create a LinkedIn post
+            const sentences = clean.split(/[.!?]+/).filter(s => s.trim());
+            
             let post = '';
             
             if (sentences.length > 0) {
-                post = sentences[0].trim() + '.';
+                // Opening hook
+                post += sentences[0].trim() + '.\n\n';
+                
+                // Body
                 if (sentences.length > 1) {
-                    post += '\n\n' + sentences.slice(1).join('. ').trim() + '.';
+                    post += sentences.slice(1).join('. ').trim() + '.\n\n';
                 }
-                post += '\n\n#LinkedIn #Professional #Growth';
+                
+                // Closing call-to-action
+                post += 'What are your thoughts? Share in the comments.\n\n';
+                
+                // Hashtags
+                post += '#LinkedIn #ProfessionalGrowth #CareerDevelopment #Networking #Leadership';
             } else {
-                post = text + '\n\n#LinkedIn #Professional #Growth';
+                post = clean + '\n\n#LinkedIn #ProfessionalGrowth';
             }
-            
+
             return post;
         }
 
-        // Editor Functions
+        function showEditor(post) {
+            document.getElementById('processingState').style.display = 'none';
+            document.getElementById('editorState').style.display = 'block';
+            document.getElementById('postTextarea').value = post;
+            updateCharCounter();
+        }
+
         function updateCharCounter() {
-            const text = document.getElementById('postTextarea').value;
-            const count = text.length;
+            const count = document.getElementById('postTextarea').value.length;
             const counter = document.getElementById('charCounter');
-            counter.textContent = `${count} / 3000`;
-            
-            if (count > 3000) {
-                counter.classList.add('over');
-            } else {
-                counter.classList.remove('over');
-            }
+            counter.textContent = count + ' / 3000';
+            counter.classList.toggle('over', count > 3000);
         }
 
         document.getElementById('postTextarea').addEventListener('input', updateCharCounter);
 
         function toggleEdit() {
-            const enabled = document.getElementById('editToggle').checked;
-            document.getElementById('postTextarea').disabled = !enabled;
+            document.getElementById('postTextarea').disabled = !document.getElementById('editToggle').checked;
         }
 
         function copyToClipboard() {
@@ -340,7 +283,6 @@
             navigator.clipboard.writeText(text).then(() => {
                 document.getElementById('copyText').style.display = 'none';
                 document.getElementById('copiedFeedback').classList.add('show');
-                
                 setTimeout(() => {
                     document.getElementById('copyText').style.display = 'inline';
                     document.getElementById('copiedFeedback').classList.remove('show');
@@ -349,7 +291,7 @@
         }
 
         function generateAnother() {
-            document.getElementById('editorContainer').style.display = 'none';
+            document.getElementById('editorState').style.display = 'none';
             document.getElementById('idleState').style.display = 'block';
             document.getElementById('postTextarea').value = '';
             updateCharCounter();

@@ -32,7 +32,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Navigation */
 .nav {
     position: fixed;
     top: 0;
@@ -51,8 +50,7 @@ a:hover {
 .logo {
     font-size: 24px;
     font-weight: 700;
-    color: var(--dark-slate);
-    cursor: pointer;
+    color: var(--linkedin-blue);
     text-decoration: none;
 }
 
@@ -68,17 +66,10 @@ a:hover {
 .nav-link {
     color: var(--medium-gray);
     font-weight: 500;
-    cursor: pointer;
+    text-decoration: none;
     padding: 8px 0;
     border-bottom: 2px solid transparent;
     transition: all 200ms ease;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    font-family: inherit;
-    font-size: 16px;
-    text-decoration: none;
 }
 
 .nav-link:hover {
@@ -91,7 +82,6 @@ a:hover {
     border-bottom-color: var(--linkedin-blue);
 }
 
-/* Main content */
 .main-content {
     padding-top: 64px;
     min-height: calc(100vh - 64px);
@@ -103,7 +93,6 @@ a:hover {
     padding: 0 24px;
 }
 
-/* Hero Section */
 .hero {
     min-height: calc(100vh - 64px);
     display: flex;
@@ -122,7 +111,6 @@ a:hover {
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 24px;
-    color: var(--dark-slate);
 }
 
 .hero p {
@@ -165,7 +153,6 @@ a:hover {
     text-decoration: none;
 }
 
-/* How It Works Section */
 .how-it-works {
     padding: 80px 0;
     background: var(--light-gray);
@@ -176,7 +163,6 @@ a:hover {
     font-weight: 600;
     text-align: center;
     margin-bottom: 48px;
-    color: var(--dark-slate);
 }
 
 .steps-grid {
@@ -191,11 +177,6 @@ a:hover {
     border-radius: 8px;
     border: 1px solid var(--border-gray);
     text-align: center;
-    transition: all 200ms ease;
-}
-
-.step-card:hover {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
 }
 
 .step-number {
@@ -222,7 +203,6 @@ a:hover {
     font-size: 20px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: var(--dark-slate);
 }
 
 .step-card p {
@@ -230,13 +210,26 @@ a:hover {
     font-size: 14px;
 }
 
-/* Recording Page */
 .recording-page {
     min-height: calc(100vh - 64px);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 64px 24px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: var(--medium-gray);
+    font-size: 14px;
+    margin-left: 43%;
+    align-self: flex-start;
+}
+
+.back-link:hover {
+    color: var(--linkedin-blue);
 }
 
 .recording-container {
@@ -269,12 +262,8 @@ a:hover {
 }
 
 @keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(10, 102, 194, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 20px rgba(10, 102, 194, 0);
-    }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(10, 102, 194, 0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(10, 102, 194, 0); }
 }
 
 .mic-icon {
@@ -290,13 +279,23 @@ a:hover {
 .recording-timer {
     font-size: 24px;
     font-weight: 600;
-    color: var(--dark-slate);
     margin-bottom: 8px;
 }
 
 .recording-status {
     color: var(--medium-gray);
     margin-bottom: 16px;
+}
+
+.recording-text {
+    background: var(--light-gray);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 16px;
+    min-height: 60px;
+    text-align: left;
+    font-size: 14px;
+    color: var(--dark-slate);
 }
 
 .max-duration {
@@ -333,16 +332,6 @@ a:hover {
     color: var(--dark-slate);
 }
 
-/* Recording States */
-#recordingState, #processingState {
-    display: none;
-}
-
-#recordingState.active, #processingState.active {
-    display: block;
-}
-
-/* Post Editor */
 .editor-container {
     max-width: 600px;
     width: 100%;
@@ -350,13 +339,13 @@ a:hover {
     padding: 32px;
     border-radius: 8px;
     border: 1px solid var(--border-gray);
+    text-align: left;
 }
 
 .editor-container h2 {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 24px;
-    text-align: left;
 }
 
 .post-textarea {
@@ -375,11 +364,6 @@ a:hover {
 .post-textarea:focus {
     outline: none;
     border-color: var(--linkedin-blue);
-}
-
-.post-textarea:disabled {
-    background: var(--light-gray);
-    cursor: not-allowed;
 }
 
 .editor-footer {
@@ -403,6 +387,7 @@ a:hover {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    margin-top: 16px;
 }
 
 .btn-outline {
@@ -453,19 +438,17 @@ a:hover {
     display: block;
 }
 
-/* Back Link */
-.back-link {
-    display: inline-block;
-    margin-bottom: 24px;
-    color: var(--medium-gray);
+.success-message {
+    color: var(--success-green);
     font-size: 14px;
+    margin-top: 12px;
+    display: none;
 }
 
-.back-link:hover {
-    color: var(--linkedin-blue);
+.success-message.show {
+    display: block;
 }
 
-/* Pricing Section */
 .pricing {
     padding: 80px 0;
     background: var(--light-gray);
@@ -514,7 +497,6 @@ a:hover {
 .price {
     font-size: 36px;
     font-weight: 700;
-    color: var(--dark-slate);
     margin-bottom: 24px;
 }
 
@@ -544,7 +526,6 @@ a:hover {
     flex-shrink: 0;
 }
 
-/* Footer */
 .footer {
     background: var(--light-gray);
     padding: 32px 0;
@@ -563,16 +544,11 @@ a:hover {
     font-size: 14px;
 }
 
-.footer-links a:hover {
-    color: var(--dark-slate);
-}
-
 .copyright {
     color: var(--medium-gray);
     font-size: 14px;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
     .steps-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -583,42 +559,20 @@ a:hover {
     .nav {
         padding: 0 16px;
     }
-
     .nav-links {
         gap: 16px;
     }
-
     .hero h1 {
         font-size: 32px;
     }
-
     .hero p {
         font-size: 16px;
     }
-
     .btn-secondary {
         display: block;
         margin: 16px 0 0;
     }
-
-    .steps-grid {
+    .steps-grid, .pricing-grid {
         grid-template-columns: 1fr;
-    }
-
-    .pricing-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .editor-footer {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .editor-actions {
-        justify-content: stretch;
-    }
-
-    .editor-actions .btn {
-        flex: 1;
     }
 }
